@@ -134,20 +134,55 @@ if(out.email&& !/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(out.email))issues.push('C
 const useful=FIELDS.filter(f=>out[f]).length;if(useful<3||(!out.firstName&&!out.lastName))return null;
 return {...out,issues,source,completeness:useful};
 }
-function parseText(text,source='Texto pegado'){return splitBlocks(text).map(b=>parseBlock(b,source)).filter(Boolean);}
+function parseVerticalRows(rows,source){
+if(rows.length<9||!rows.every(r=>Array.isArray(r)&&r.slice(1).every(x=>!String(x??'').trim())))return null;
+const vals=rows.map(r=>clean(r[0]??''));
+function valid(group){
+if(group.length!==9)return false;
+const [first,last,dob,ssn,address,city,state,zip,email]=group;
+if(!first&&!last)return false;
+if(first&&(/[:\/@]/.test(first)||first.length>100))return false;
+if(last&&(/[:\/@]/.test(last)||last.length>100))return false;
+if(dob&&!normalizeDate(dob))return false;
+if(ssn&&!formatSSN(ssn))return false;
+if(state&&!stateOf(state))return false;
+if(zip&&!/^\d{5}(?:-\d{4})?$/.test(zip))return false;
+if(email&&!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(email))return false;
+return [dob&&normalizeDate(dob),ssn&&formatSSN(ssn),state&&stateOf(state),zip&&ZIP.test(zip),email&&EMAIL.test(email)].filter(Boolean).length>=2;
+}
+const profiles=[];let i=0;
+while(i<vals.length){
+if(vals.slice(i).every(x=>!x))break;
+let group=vals.slice(i,i+9);
+if(!valid(group)){
+if(!vals[i]&&valid(vals.slice(i+1,i+10))){i++;continue;}
+return null;
+}
+const entry=parseBlock(FIELDS.map((field,k)=>field+': '+group[k]).join('\n'),source);
+if(!entry)return null;
+profiles.push(entry);i+=9;
+while(i<vals.length&&!vals[i]&&valid(vals.slice(i+1,i+10)))i++;
+}
+return profiles.length?profiles:null;
+}
+function parseText(text,source='Texto pegado'){
+const lines=String(text??'').split(/\r?\n/);
+const vertical=parseVerticalRows(lines.map(line=>[line]),source);
+if(vertical)return vertical;
+return splitBlocks(text).map(b=>parseBlock(b,source)).filter(Boolean);
+}
 function parseCSV(text){
 let src=String(text??'').replace(/^\uFEFF/,'');
 let head=src.split(/\r?\n/).slice(0,4).join('\n');
 let sep=[',',';','\t','|'].map(s=>({s,n:head.split(s).length-1})).sort((a,b)=>b.n-a.n)[0]?.s||',';
 let rows=[],row=[],v='',quote=false;
-for(let i=0;i<src.length;i++){const ch=src[i];if(quote){if(ch==='"'&&src[i+1]==='"'){v+='"';i++;}else if(ch==='"')quote=false;else v+=ch;}else if(ch==='"')quote=true;else if(ch===sep){row.push(v);v='';}else if(ch==='\n'){row.push(v.replace(/\r$/,''));if(row.some(x=>x.trim()))rows.push(row);row=[];v='';}else v+=ch;}
-row.push(v);if(row.some(x=>x.trim()))rows.push(row);return rows;
+for(let i=0;i<src.length;i++){const ch=src[i];if(quote){if(ch==='"'&&src[i+1]==='"'){v+='"';i++;}else if(ch==='"')quote=false;else v+=ch;}else if(ch==='"')quote=true;else if(ch===sep){row.push(v);v='';}else if(ch==='\n'){row.push(v.replace(/\r$/,''));rows.push(row);row=[];v='';}else v+=ch;}
+row.push(v);rows.push(row);return rows;
 }
 function parseRows(rows,source='Archivo'){
 if(!rows.length)return [];
-const vertical=rows.length>=9&&rows.every(r=>Array.isArray(r)&&r.slice(1).every(x=>!String(x??'').trim()));
-if(vertical){const vals=rows.map(r=>clean(r[0]??'')),groups=[];let cur=[];for(const v of vals){if(!v&&cur.length===9){groups.push(cur);cur=[];}else cur.push(v);}if(cur.length)groups.push(cur);
-if(groups.length&&groups.every(g=>g.length===9&&normalizeDate(g[2])&&g[8].includes('@'))){return groups.map(g=>parseBlock(FIELDS.map((f,i)=>f+': '+g[i]).join('\n'),source)).filter(Boolean);}}
+const vertical=parseVerticalRows(rows,source);
+if(vertical)return vertical;
 rows=rows.filter(r=>Array.isArray(r)&&r.some(c=>String(c??'').trim()));if(!rows.length)return [];
 const head=rows[0].map(v=>String(v??'').trim()),types=head.map(kindFor);
 const recognized=types.filter(x=>x&&x!=='other'&&x!=='phone').length;

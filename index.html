@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#100c10">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; img-src 'self' data:; script-src 'self'; style-src 'self'; worker-src 'self'; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="description" content="Organizador inteligente de CSV, Excel y TXT. Los datos se procesan en tu navegador: sin subir archivos a servidores.">
+<title>ELESEDE | Data Organizer</title>
+<link rel="stylesheet" href="./styles.css">
+<script src="./vendor/jszip.min.js" defer></script>
+<script src="./parser.js" defer></script>
+<script src="./excel.js" defer></script>
+<script src="./app.js" defer></script>
+</head>
+<body>
+<div class="ambient a"></div><div class="ambient b"></div><div class="ambient-grid"></div>
+<div class="shell">
+<header class="topbar">
+  <div class="brand"><div class="logo">E<span>.</span></div><div class="brand-txt"><strong>ELESEDE<span>.</span></strong><small>DATA ORGANIZER</small></div></div>
+  <div class="topnav"><span class="local"><i></i> PROCESAMIENTO LOCAL</span><button class="icon-btn" id="privacyButton" title="Privacidad local" aria-label="Privacidad local">ⓘ</button></div>
+</header>
+<main>
+<section class="hero">
+  <div class="eyebrow"><span class="red-line"></span> ORGANIZACIÓN INTELIGENTE <em>V1.0</em></div>
+  <h1>Datos desordenados.<br><span>Perfiles organizados.</span></h1>
+  <p>Sube tus archivos y organiza automáticamente cada cliente en nueve líneas exactas. Sin etiquetas, sin información extra, sin enviar nada al servidor.</p>
+  <div class="pills"><span>CSV · EXCEL · TXT</span><span>LOTES MÚLTIPLES</span><span>SIN REGISTROS</span></div>
+</section>
+<section class="layout">
+  <div class="panel upload">
+    <div class="panel-top"><div><small class="section-no">01 / ENTRADA</small><h2>Agrega tus datos</h2></div><span class="corner">↗</span></div>
+    <div class="tabs"><button id="tabFiles" class="tab active" type="button">Subir archivos</button><button id="tabText" class="tab" type="button">Pegar texto</button></div>
+    <div id="fileView">
+      <div id="dropzone" role="button" tabindex="0" class="dropzone">
+        <input id="fileInput" type="file" accept=".txt,.csv,.tsv,.xlsx,.xlsm" multiple hidden>
+        <div class="upload-icon">⇧</div>
+        <strong>Arrastra tus archivos aquí</strong>
+        <span>o <b>explora tu dispositivo</b></span>
+        <small>CSV, TXT, TSV, XLSX, XLSM · varios a la vez</small>
+      </div>
+      <div class="file-toolbar"><span id="fileCount" hidden></span><button type="button" id="removeFiles" hidden>Quitar todos</button></div>
+      <div id="fileList" class="file-list"></div>
+    </div>
+    <div id="textView" hidden><label class="field-label" for="pasteInput">Pega aquí uno o varios perfiles</label><textarea spellcheck="false" id="pasteInput" placeholder="NAME: Ana Ejemplo&#10;DOB: 01/15/1990&#10;SSN: 000-00-0000&#10;ADDRESS: 100 Example St;Miami;FL;33101&#10;EMAIL: ana@example.com"></textarea><p class="quiet">Puedes procesar el texto junto a los archivos seleccionados.</p></div>
+    <div class="toggles">
+      <label><input type="checkbox" id="dedupe" checked><span>Eliminar duplicados</span></label>
+      <label><input type="checkbox" id="mask" checked><span>Ocultar SSN en pantalla</span></label>
+    </div>
+    <button id="processButton" class="button primary big" type="button">Organizar datos</button>
+    <button id="cancelButton" class="button ghost cancel" type="button" hidden>Cancelar procesamiento</button>
+    <div id="progressWrap" class="progress" hidden><div class="progress-top"><span id="progressText">Analizando...</span></div><div class="track"><div id="progressBar"></div></div><small>El procesamiento ocurre en este dispositivo.</small></div>
+  </div>
+  <aside class="panel format">
+    <div class="panel-top"><div><small class="section-no">02 / FORMATO</small><h2>Salida estructurada</h2></div><span class="nine">9 CAMPOS</span></div>
+    <p class="info">Cada perfil se convierte en nueve líneas, sin títulos ni datos adicionales.</p>
+    <div class="sample">
+      <div class="sample-head"><span><i></i><i></i><i></i></span><small>PERFIL_FINAL.TXT</small><b>✓</b></div>
+      <div class="sample-row"><span>01</span>ANA</div><div class="sample-row"><span>02</span>EJEMPLO</div>
+      <div class="sample-row"><span>03</span>01/15/1990</div><div class="sample-row"><span>04</span>•••-••-••••</div>
+      <div class="sample-row"><span>05</span>100 EXAMPLE ST</div><div class="sample-row"><span>06</span>MIAMI</div>
+      <div class="sample-row"><span>07</span>FL</div><div class="sample-row"><span>08</span>33101</div><div class="sample-row"><span>09</span>ana@example.com</div>
+    </div>
+    <div class="priority"><small>ORDEN DE SELECCIÓN</small><div><b>01</b> Principal</div><div><b>02</b> Posible principal</div><div><b>03</b> Primer valor</div></div>
+    <div class="local-note"><span class="shield">◈</span><div><b>Tus datos se quedan contigo.</b><p>Sin cuentas, sin cookies, sin base de datos. El navegador procesa los archivos localmente.</p></div></div>
+  </aside>
+</section>
+<section id="resultSection" class="results" hidden>
+  <div class="result-heading"><div><small class="section-no">03 / RESULTADOS</small><h2>Perfiles organizados <span id="count">0</span></h2><p>Revisa, copia o descarga el lote completo.</p></div><button id="newBatch" class="button ghost" type="button">+ Nuevo lote</button></div>
+  <div class="metrics"><div><small>PERFILES ENCONTRADOS</small><b id="total">0</b></div><div><small>COMPLETOS</small><b id="completed">0</b></div><div><small>PARA REVISAR</small><b id="review">0</b></div><div><small>DUPLICADOS OMITIDOS</small><b id="duplicates">0</b></div></div>
+  <div class="result-actions">
+    <div class="export-buttons"><button id="copyAll" type="button" class="button ghost">▤ Copiar todos</button><button id="downloadCsv" type="button" class="button ghost">↓ Descargar CSV</button><button id="downloadExcel" type="button" class="button primary">↓ Descargar Excel</button></div>
+    <input id="searchInput" class="search" type="search" placeholder="Buscar perfil..." aria-label="Buscar perfiles" autocomplete="off">
+  </div>
+  <div id="errors" class="warning" hidden></div>
+  <div id="cards" class="cards"></div>
+  <div class="more"><button id="loadMore" class="button ghost" type="button" hidden>Mostrar más perfiles ↓</button><p id="showing"></p></div>
+</section>
+</main>
+<footer><div><strong>E<span>.</span></strong> DESARROLLADO POR <b>ELESEDE</b></div><small>PRIVADO · SIN LOGS · RESPONSIVE · © 2026</small></footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<dialog id="privacyDialog"><div class="dialog-head"><h2>Privacidad local</h2><button id="closeDialog" class="icon-btn" aria-label="Cerrar">✕</button></div><p>Esta web únicamente distribuye archivos HTML, CSS y JavaScript. Los documentos que selecciones se leen, analizan y exportan dentro de tu navegador. El contenido no se envía a Render ni a APIs externas.</p><p>La aplicación no crea cuentas, bases de datos, cookies, historial ni analíticas. Los perfiles permanecen en la memoria de esta pestaña hasta que la cierres. Si un dato es ambiguo, revísalo antes de utilizarlo.</p><button id="closeDialogBottom" class="button primary" onclick="document.getElementById('privacyDialog').close()">Entendido</button></dialog>
+</body></html>

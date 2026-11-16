@@ -97,7 +97,7 @@ $('newBatch').onclick=clearAll;$('searchInput').oninput=()=>{state.shown=36;filt
 $('loadMore').onclick=()=>{state.shown+=36;renderCards();};$('mask').onchange=()=>{if(state.records.length)renderCards();};
 $('copyAll').onclick=()=>copy(state.records.map(vertical).join('\n\n'),'Todos los perfiles copiados');
 $('downloadCsv').onclick=downloadCsv;$('downloadExcel').onclick=downloadXlsx;
-$('privacyButton').onclick=()=>$('privacyDialog').showModal();$('closeDialog').onclick=()=>$('privacyDialog').close();
+$('privacyButton').onclick=()=>$('privacyDialog').showModal();$('closeDialog').onclick=()=>$('privacyDialog').close();$('closeDialogBottom').onclick=()=>$('privacyDialog').close();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

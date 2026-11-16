@@ -46,7 +46,7 @@
     <div id="textView" hidden><label class="field-label" for="pasteInput">Pega aquí uno o varios perfiles</label><textarea spellcheck="false" id="pasteInput" placeholder="NAME: Ana Ejemplo&#10;DOB: 01/15/1990&#10;SSN: 000-00-0000&#10;ADDRESS: 100 Example St;Miami;FL;33101&#10;EMAIL: ana@example.com"></textarea><p class="quiet">Puedes procesar el texto junto a los archivos seleccionados.</p></div>
     <div class="toggles">
       <label><input type="checkbox" id="dedupe" checked><span>Eliminar duplicados</span></label>
-      <label><input type="checkbox" id="mask" checked><span>Ocultar SSN en pantalla</span></label>
+      
     </div>
     <button id="processButton" class="button primary big" type="button">Organizar datos</button>
     <button id="cancelButton" class="button ghost cancel" type="button" hidden>Cancelar procesamiento</button>
@@ -70,7 +70,7 @@
   <div class="result-heading"><div><small class="section-no">03 / RESULTADOS</small><h2>Perfiles organizados <span id="count">0</span></h2><p>Revisa, copia o descarga el lote completo.</p></div><button id="newBatch" class="button ghost" type="button">+ Nuevo lote</button></div>
   <div class="metrics"><div><small>PERFILES ENCONTRADOS</small><b id="total">0</b></div><div><small>COMPLETOS</small><b id="completed">0</b></div><div><small>PARA REVISAR</small><b id="review">0</b></div><div><small>DUPLICADOS OMITIDOS</small><b id="duplicates">0</b></div></div>
   <div class="result-actions">
-    <div class="export-buttons"><button id="copyAll" type="button" class="button ghost">▤ Copiar todos</button><button id="downloadCsv" type="button" class="button ghost">↓ Descargar CSV</button><button id="downloadExcel" type="button" class="button primary">↓ Descargar Excel</button></div>
+    <div class="export-buttons"><button id="copyAll" type="button" class="button ghost">▤ Copiar todos</button><button id="downloadCsv" type="button" class="button ghost">↓ Descargar CSV</button><button id="downloadExcel" type="button" class="button primary">↓ Descargar Excel</button><button id="downloadTxt" type="button" class="button ghost">↓ Descargar TXT sin comillas</button></div>
     <input id="searchInput" class="search" type="search" placeholder="Buscar perfil..." aria-label="Buscar perfiles" autocomplete="off">
   </div>
   <div id="errors" class="warning" hidden></div>

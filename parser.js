@@ -148,7 +148,7 @@ if(ssn&&!formatSSN(ssn))return false;
 if(state&&!stateOf(state))return false;
 if(zip&&!/^\d{5}(?:-\d{4})?$/.test(zip))return false;
 if(email&&!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(email))return false;
-return [dob&&normalizeDate(dob),ssn&&formatSSN(ssn),state&&stateOf(state),zip&&ZIP.test(zip),email&&EMAIL.test(email)].filter(Boolean).length>=2;
+return [dob&&normalizeDate(dob),ssn&&formatSSN(ssn),state&&stateOf(state),zip&&ZIP.test(zip),email&&/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(email)].filter(Boolean).length>=2;
 }
 const profiles=[];let i=0;
 while(i<vals.length){

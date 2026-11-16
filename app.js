@@ -7,7 +7,7 @@ let worker=null,jobId=0,pending=new Map(),toastTimer=null;
 function startWorker(){
 if(worker){worker.terminate();worker=null;}
 for(const p of pending.values())p.reject(Error('Cancelado'));pending.clear();
-try{if(location.protocol!=='file:'){worker=new Worker('./worker.js');worker.onmessage=e=>{const task=pending.get(e.data.id);if(!task)return;pending.delete(e.data.id);if(e.data.type==='error')task.reject(Error(e.data.error));else task.resolve(e.data);};worker.onerror=()=>{for(const p of pending.values())p.reject(Error('El analizador encontró un error'));pending.clear();worker.terminate();worker=null;};}}catch{worker=null;}
+try{if(location.protocol!=='file:'){worker=new Worker('./worker.js?v=20261116-previewfix2');worker.onmessage=e=>{const task=pending.get(e.data.id);if(!task)return;pending.delete(e.data.id);if(e.data.type==='error')task.reject(Error(e.data.error));else task.resolve(e.data);};worker.onerror=()=>{for(const p of pending.values())p.reject(Error('El analizador encontró un error'));pending.clear();worker.terminate();worker=null;};}}catch{worker=null;}
 }
 async function task(data){
 if(worker)return new Promise((resolve,reject)=>{let id=++jobId;pending.set(id,{resolve,reject});try{worker.postMessage({...data,id},data.buffer?[data.buffer]:[]);}catch(e){pending.delete(id);reject(e);}});
@@ -31,7 +31,7 @@ function setBusy(b){state.busy=b;$('processButton').disabled=b;$('cancelButton')
 function progress(done,total,label){const p=total?Math.round(100*done/total):0;$('progressBar').style.width=p+'%';$('progressText').textContent=label+' · '+p+'%';}
 async function process(){
 if(state.busy)return;const text=$('pasteInput').value.trim();if(!state.files.length&&!text){toast('Selecciona archivos o pega texto para empezar.');return;}
-state.cancelled=false;state.errors=[];state.records=[];state.duplicates=0;state.editing.clear();state.shown=36;$('resultSection').hidden=true;setBusy(true);
+state.cancelled=false;state.errors=[];$('searchInput').value='';state.records=[];state.duplicates=0;state.editing.clear();state.shown=36;$('resultSection').hidden=true;setBusy(true);
 const jobs=state.files.map(file=>({file}));if(text)jobs.push({text});
 let total=jobs.length,done=0,all=[];
 for(const job of jobs){if(state.cancelled)break;
@@ -42,7 +42,7 @@ done++;progress(done,total,'Procesando lote');await new Promise(r=>setTimeout(r,
 }
 if(state.cancelled){setBusy(false);toast('Procesamiento cancelado');return;}
 if($('dedupe').checked){try{const r=await task({type:'dedupe',profiles:all});state.records=r.profiles;state.duplicates=r.duplicates;}catch{state.records=ElesedeParser.dedupe(all);state.duplicates=all.length-state.records.length;}}else state.records=all;
-setBusy(false);renderResults();toast(state.records.length+' perfiles organizados');if(state.records.length)$('resultSection').scrollIntoView({behavior:'smooth',block:'start'});
+setBusy(false);renderResults();toast(state.records.length+' perfiles organizados');if(state.records.length){$('resultSection').scrollIntoView({behavior:'smooth',block:'start'});}
 }
 const missing=p=>fields.filter(f=>!String(p[f]??'').trim());
 function problems(p){const issues=(p.issues||[]).filter(x=>!x.startsWith('Campos pendientes:'));if(missing(p).length)issues.unshift('Faltan '+missing(p).length+' campos. Revisa antes de exportar.');return issues;}
@@ -66,7 +66,7 @@ toast(label||'Copiado correctamente');
 function profileCard(i){
 const p=state.records[i],probs=problems(p),editing=state.editing.has(i),card=el('article','profile'+(probs.length?' pending':''));
 const head=el('div','profile-head'),name=el('div','profile-name');name.append(el('small','muted','#'+String(i+1).padStart(3,'0')+' · '+(probs.length?'PARA REVISAR':'COMPLETO')),el('h3','',((p.firstName||'Sin nombre')+' '+(p.lastName||'')).trim()));
-const acts=el('div','profile-actions');acts.append(button(editing?'Cerrar':'Editar','mini',()=>{if(editing)state.editing.delete(i);else state.editing.add(i);renderCards();}),button('Copiar perfil','mini red',()=>copy(vertical(p),'Perfil copiado')));
+const acts=el('div','profile-actions');acts.append(button(editing?'Cerrar':'Editar','mini',()=>{if(editing)state.editing.delete(i);else state.editing.add(i);renderCards();}),button('⧉ Copiar perfil','mini red',()=>copy(vertical(p),'Perfil copiado')));
 head.append(name,acts);card.append(head);const body=el('div','profile-body');
 for(let j=0;j<fields.length;j++){const field=fields[j],line=el('div','line'+(!p[field]?' missing':''));line.append(el('span','line-number',String(j+1).padStart(2,'0')));
 if(editing){const input=el('input','field-input');input.value=p[field]||'';input.placeholder=labels[j];input.setAttribute('aria-label',labels[j]);input.dataset.field=field;input.autocomplete='off';line.append(input);}
@@ -75,7 +75,7 @@ body.append(line);}
 if(editing){const controls=el('div','edit-actions');controls.append(button('Cancelar','mini',()=>{state.editing.delete(i);renderCards();}),button('Guardar cambios','mini red',()=>{for(const input of body.querySelectorAll('.field-input'))p[input.dataset.field]=input.value.trim();p.issues=[];state.editing.delete(i);renderResults();toast('Cambios guardados en esta pestaña');}));body.append(controls);}
 card.append(body);if(probs.length&&!editing)card.append(el('div','warning',probs.join(' · ')));return card;
 }
-function renderCards(){const root=$('cards');root.replaceChildren();const ids=state.indices.slice(0,state.shown);if(!ids.length)root.append(el('div','empty',state.records.length?'No hay perfiles que coincidan.':'No se encontraron perfiles en este lote.'));
+function renderCards(){const root=$('cards');root.replaceChildren();const ids=state.indices.slice(0,state.shown);if(!ids.length)root.append(el('div','empty',state.records.length?'No hay perfiles que coincidan. Borra el texto del buscador para verlos todos.':'No se encontraron perfiles. Revisa el formato del archivo.'));
 else{const frag=document.createDocumentFragment();for(const i of ids)frag.append(profileCard(i));root.append(frag);}
 $('loadMore').hidden=state.shown>=state.indices.length;$('showing').textContent='Mostrando '+ids.length+' de '+state.indices.length+' perfiles';}
 function download(data,name,mime){const blob=data instanceof Blob?data:new Blob([data],{type:mime}),url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}

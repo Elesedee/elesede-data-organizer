@@ -70,7 +70,7 @@ const acts=el('div','profile-actions');acts.append(button(editing?'Cerrar':'Edit
 head.append(name,acts);card.append(head);const body=el('div','profile-body');
 for(let j=0;j<fields.length;j++){const field=fields[j],line=el('div','line'+(!p[field]?' missing':''));line.append(el('span','line-number',String(j+1).padStart(2,'0')));
 if(editing){const input=el('input','field-input');input.value=p[field]||'';input.placeholder=labels[j];input.setAttribute('aria-label',labels[j]);input.dataset.field=field;input.autocomplete='off';line.append(input);}
-else{line.append(el('span','line-value',field==='ssn'&&$('mask').checked&&p[field]?'•••-••-••••':(p[field]||'—')));const b=button('Copiar','line-copy',()=>copy(String(p[field]||''),'Línea '+(j+1)+' copiada'));b.title='Copiar '+labels[j];line.append(b);}
+else{line.append(el('span','line-value',p[field]||'—'));const b=button('Copiar','line-copy',()=>copy(String(p[field]||''),'Línea '+(j+1)+' copiada'));b.title='Copiar '+labels[j];line.append(b);}
 body.append(line);}
 if(editing){const controls=el('div','edit-actions');controls.append(button('Cancelar','mini',()=>{state.editing.delete(i);renderCards();}),button('Guardar cambios','mini red',()=>{for(const input of body.querySelectorAll('.field-input'))p[input.dataset.field]=input.value.trim();p.issues=[];state.editing.delete(i);renderResults();toast('Cambios guardados en esta pestaña');}));body.append(controls);}
 card.append(body);if(probs.length&&!editing)card.append(el('div','warning',probs.join(' · ')));return card;
@@ -79,7 +79,8 @@ function renderCards(){const root=$('cards');root.replaceChildren();const ids=st
 else{const frag=document.createDocumentFragment();for(const i of ids)frag.append(profileCard(i));root.append(frag);}
 $('loadMore').hidden=state.shown>=state.indices.length;$('showing').textContent='Mostrando '+ids.length+' de '+state.indices.length+' perfiles';}
 function download(data,name,mime){const blob=data instanceof Blob?data:new Blob([data],{type:mime}),url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
-function safeCsv(s){let v=String(s??'');if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}
+function safeCsv(s){let v=String(s??'');if(/^[=+\-@\t\r]/.test(v))v="'"+v;return /[,"\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function downloadTxt(){if(!state.records.length)return toast('No hay perfiles');download(state.records.map(vertical).join('\r\n\r\n'),'elesede_organizados.txt','text/plain;charset=utf-8');toast('TXT sin comillas descargado');}
 function downloadCsv(){if(!state.records.length)return toast('No hay perfiles');const body=state.records.map(p=>values(p).map(safeCsv).join('\r\n')).join('\r\n\r\n');download('\uFEFF'+body,'elesede_organizados.csv','text/csv;charset=utf-8');toast('CSV descargado');}
 async function downloadXlsx(){if(!state.records.length)return toast('No hay perfiles');const b=$('downloadExcel');b.disabled=true;try{const r=await task({type:'export-xlsx',records:state.records});download(r.buffer,'elesede_organizados.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');toast('Excel descargado');}catch(e){toast('No se pudo generar Excel: '+e.message);}finally{b.disabled=false;}}
 function clearAll(){if(state.busy)return;state.files=[];state.records=[];state.indices=[];state.errors=[];state.editing.clear();$('pasteInput').value='';$('searchInput').value='';$('resultSection').hidden=true;renderFiles();setTab('files');window.scrollTo({top:0,behavior:'smooth'});}
@@ -94,9 +95,9 @@ for(const name of ['dragleave','drop'])dz.addEventListener(name,e=>{e.preventDef
 dz.addEventListener('drop',e=>addFiles(e.dataTransfer.files));window.addEventListener('dragover',e=>e.preventDefault());window.addEventListener('drop',e=>e.preventDefault());
 $('processButton').onclick=process;$('cancelButton').onclick=()=>{state.cancelled=true;startWorker();setBusy(false);};
 $('newBatch').onclick=clearAll;$('searchInput').oninput=()=>{state.shown=36;filter();};
-$('loadMore').onclick=()=>{state.shown+=36;renderCards();};$('mask').onchange=()=>{if(state.records.length)renderCards();};
+$('loadMore').onclick=()=>{state.shown+=36;renderCards();};
 $('copyAll').onclick=()=>copy(state.records.map(vertical).join('\n\n'),'Todos los perfiles copiados');
-$('downloadCsv').onclick=downloadCsv;$('downloadExcel').onclick=downloadXlsx;
+$('downloadCsv').onclick=downloadCsv;$('downloadExcel').onclick=downloadXlsx;$('downloadTxt').onclick=downloadTxt;
 $('privacyButton').onclick=()=>$('privacyDialog').showModal();$('closeDialog').onclick=()=>$('privacyDialog').close();$('closeDialogBottom').onclick=()=>$('privacyDialog').close();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();

@@ -8,11 +8,11 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; img-src 'self' data:; script-src 'self'; style-src 'self'; worker-src 'self'; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'">
 <meta name="description" content="Organizador inteligente de CSV, Excel y TXT. Los datos se procesan en tu navegador: sin subir archivos a servidores.">
 <title>ELESEDE | Data Organizer</title>
-<link rel="stylesheet" href="./styles.css">
-<script src="./vendor/jszip.min.js" defer></script>
-<script src="./parser.js" defer></script>
-<script src="./excel.js" defer></script>
-<script src="./app.js" defer></script>
+<link rel="stylesheet" href="./styles.css?v=20261116-previewfix2">
+<script src="./vendor/jszip.min.js?v=20261116-previewfix2" defer></script>
+<script src="./parser.js?v=20261116-previewfix2" defer></script>
+<script src="./excel.js?v=20261116-previewfix2" defer></script>
+<script src="./app.js?v=20261116-previewfix2" defer></script>
 </head>
 <body>
 <div class="ambient a"></div><div class="ambient b"></div><div class="ambient-grid"></div>
@@ -74,6 +74,7 @@
     <input id="searchInput" class="search" type="search" placeholder="Buscar perfil..." aria-label="Buscar perfiles" autocomplete="off">
   </div>
   <div id="errors" class="warning" hidden></div>
+  <div class="preview-banner"><div><strong>VISTA PREVIA · PERFIL POR PERFIL</strong><p>Cada tarjeta muestra los 9 datos completos. Usa «Copiar perfil» o «Copiar» en cualquier línea.</p></div><span>Vista individual activa</span></div>
   <div id="cards" class="cards"></div>
   <div class="more"><button id="loadMore" class="button ghost" type="button" hidden>Mostrar más perfiles ↓</button><p id="showing"></p></div>
 </section>

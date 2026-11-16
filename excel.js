@@ -12,7 +12,8 @@ while((match=rx.exec(xml))!==null){let cells=[],c,cx=/<c\b([^>]*?)(?:\/>|>([\s\S
 while((c=cx.exec(match[2]))!==null){const i=attr(c[1],'r')?col(attr(c[1],'r')):index;if(i>2048)continue;const type=attr(c[1],'t'),body=c[2]||'';let value='';
 if(type==='inlineStr')value=textTags(body);else {value=decode(body.match(/<v\b[^>]*>([\s\S]*?)<\/v>/i)?.[1]||'');if(type==='s')value=shared[Number(value)]??'';if(type==='str'&&!value)value=textTags(body);}
 cells[i]=value;index=i+1;}
-if(cells.length)rows.push(cells);if(rows.length>250000)throw Error('Excel demasiado grande: divide el lote en archivos más pequeños.');
+const excelRow=Number(attr(match[1],'r'));if(Number.isSafeInteger(excelRow)&&excelRow>rows.length+1&&excelRow<=250000){while(rows.length<excelRow-1)rows.push([]);}
+rows.push(cells);if(rows.length>250000)throw Error('Excel demasiado grande: divide el lote en archivos más pequeños.');
 }return rows;}
 async function readXlsx(data,source){
 if(typeof JSZip==='undefined')throw Error('No se cargó el módulo Excel.');

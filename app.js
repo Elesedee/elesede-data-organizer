@@ -7,7 +7,7 @@ let worker=null,jobId=0,pending=new Map(),toastTimer=null;
 function startWorker(){
 if(worker){worker.terminate();worker=null;}
 for(const p of pending.values())p.reject(Error('Cancelado'));pending.clear();
-try{if(location.protocol!=='file:'){worker=new Worker('./worker.js?v=20261116-previewfix2');worker.onmessage=e=>{const task=pending.get(e.data.id);if(!task)return;pending.delete(e.data.id);if(e.data.type==='error')task.reject(Error(e.data.error));else task.resolve(e.data);};worker.onerror=()=>{for(const p of pending.values())p.reject(Error('El analizador encontró un error'));pending.clear();worker.terminate();worker=null;};}}catch{worker=null;}
+try{if(location.protocol!=='file:'){worker=new Worker('./worker.js?v=20261116-plain-export4');worker.onmessage=e=>{const task=pending.get(e.data.id);if(!task)return;pending.delete(e.data.id);if(e.data.type==='error')task.reject(Error(e.data.error));else task.resolve(e.data);};worker.onerror=()=>{for(const p of pending.values())p.reject(Error('El analizador encontró un error'));pending.clear();worker.terminate();worker=null;};}}catch{worker=null;}
 }
 async function task(data){
 if(worker)return new Promise((resolve,reject)=>{let id=++jobId;pending.set(id,{resolve,reject});try{worker.postMessage({...data,id},data.buffer?[data.buffer]:[]);}catch(e){pending.delete(id);reject(e);}});
@@ -79,7 +79,18 @@ function renderCards(){const root=$('cards');root.replaceChildren();const ids=st
 else{const frag=document.createDocumentFragment();for(const i of ids)frag.append(profileCard(i));root.append(frag);}
 $('loadMore').hidden=state.shown>=state.indices.length;$('showing').textContent='Mostrando '+ids.length+' de '+state.indices.length+' perfiles';}
 function download(data,name,mime){const blob=data instanceof Blob?data:new Blob([data],{type:mime}),url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
-function safeCsv(s){let v=String(s??'');if(/^[=+\-@\t\r]/.test(v))v="'"+v;return /[,"\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function safeCsv(s){
+let v=String(s??'')
+  .replace(/["“”«»]/g,'')
+  .replace(/[\r\n\t]+/g,' ')
+  .replace(/,/g,' ')
+  .replace(/\s{2,}/g,' ')
+  .trim();
+// Un CSV vertical sin comillas necesita sustituir las comas internas.
+// Evita fórmulas ejecutables al abrir CSV con Excel sin añadir apóstrofes.
+if(/^[=+\-@]/.test(v))v=v.replace(/^[=+\-@]+/,'').trimStart();
+return v;
+}
 function downloadTxt(){if(!state.records.length)return toast('No hay perfiles');download(state.records.map(vertical).join('\r\n\r\n'),'elesede_organizados.txt','text/plain;charset=utf-8');toast('TXT sin comillas descargado');}
 function downloadCsv(){if(!state.records.length)return toast('No hay perfiles');const body=state.records.map(p=>values(p).map(safeCsv).join('\r\n')).join('\r\n\r\n');download('\uFEFF'+body,'elesede_organizados.csv','text/csv;charset=utf-8');toast('CSV descargado');}
 async function downloadXlsx(){if(!state.records.length)return toast('No hay perfiles');const b=$('downloadExcel');b.disabled=true;try{const r=await task({type:'export-xlsx',records:state.records});download(r.buffer,'elesede_organizados.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');toast('Excel descargado');}catch(e){toast('No se pudo generar Excel: '+e.message);}finally{b.disabled=false;}}

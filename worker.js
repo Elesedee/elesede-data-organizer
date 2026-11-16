@@ -1,6 +1,6 @@
 /* Worker: analiza lotes y genera XLSX sin congelar la interfaz. */
 'use strict';
-importScripts('./vendor/jszip.min.js','./parser.js','./excel.js');
+importScripts('./vendor/jszip.min.js?v=20261116-previewfix2','./parser.js?v=20261116-previewfix2','./excel.js?v=20261116-previewfix2');
 self.onmessage=async({data})=>{
 const {type,id}=data;
 try{
